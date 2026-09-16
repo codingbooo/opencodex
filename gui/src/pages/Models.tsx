@@ -2499,15 +2499,15 @@ export default function Models({ apiBase, restartEpoch = 0 }: { apiBase: string;
                 onClick={() => {
                   const modelId = customFormModelId.trim();
                   const displayName = customFormDisplayName.trim();
-                  const ctxVal = customFormContextWindow ? Number(customFormContextWindow.replace(/[_,\s]/g, "")) : undefined;
-                  const contextWindow = ctxVal && ctxVal > 0 ? Math.floor(ctxVal) : undefined;
+                  const contextWindow = parseContextWindowDraft(customFormContextWindow);
+                  if (contextWindow === undefined) { setCustomError(t("models.contextInvalid")); return; }
                   if (customModalMode === "add") {
                     const reasoningEfforts = customFormReasoning ? customFormReasoningEfforts : undefined;
                     void addCustomModel(
                       customModalProvider,
                       modelId,
                       displayName || undefined,
-                      contextWindow,
+                      contextWindow ?? undefined,
                       customFormModalities.length > 0 ? customFormModalities : undefined,
                       reasoningEfforts,
                     );
@@ -2517,7 +2517,7 @@ export default function Models({ apiBase, restartEpoch = 0 }: { apiBase: string;
                     void updateCustomModel(customModalId, {
                       modelId,
                       displayName,
-                      contextWindow: contextWindow ?? null,
+                      contextWindow,
                       inputModalities: customFormModalities,
                       reasoningEfforts: customFormReasoning ? customFormReasoningEfforts : null,
                     });
