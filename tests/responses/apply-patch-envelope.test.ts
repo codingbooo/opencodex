@@ -233,3 +233,103 @@ describe("raw exec patch envelope recognition", () => {
     }
   });
 });
+
+// #5046: recognition and compilation must read ONE canonical body. Recognition accepted these
+// representations (#4983) but compilation still received the pre-repair text, so the generated
+// JavaScript handed `tools.apply_patch` the wrapper JSON or the outer fence as the patch.
+describe("recognized apply_patch wrappers compile from the body recognition validated", () => {
+  const CODE_MODE = new Set(["exec"]);
+  // Representations the BODY recognizer accepts for `exec`: the function wrapper, the bare body,
+  // and exactly one of exec's fallback fields. `patch` is deliberately not here — it is not an
+  // exec fallback key, so a bare `exec` carrying `{patch:...}` is not recognized from the body.
+  const RECOGNIZED: Array<[string, string]> = [
+    ["the bare body", CANONICAL_PATCH],
+    ["the {input} function wrapper", JSON.stringify({ input: CANONICAL_PATCH })],
+  ];
+  for (const key of ["code", "script", "js", "javascript", "command", "cmd", "content"]) {
+    RECOGNIZED.push([`the {${key}} fallback field`, JSON.stringify({ [key]: CANONICAL_PATCH })]);
+  }
+  // Representations that only ever reach the compiler with the NAME already resolved to
+  // apply_patch. The name-based path never took the recognizer's reading, so it keeps
+  // `unwrapPatchInput`'s `input`/`patch` unwrap.
+  const NAME_BASED: Array<[string, string]> = [
+    ["the bare body", CANONICAL_PATCH],
+    ["the {input} function wrapper", JSON.stringify({ input: CANONICAL_PATCH })],
+    ["the {patch} field", JSON.stringify({ patch: CANONICAL_PATCH })],
+    ["the outer fence", "```diff\n" + CANONICAL_PATCH + "\n```"],
+  ];
+
+  test("every recognized representation compiles to the same raw patch", () => {
+    for (const [label, body] of RECOGNIZED) {
+      expect(resolveCodeModeHelperName(undefined, "exec", body, undefined, CODE_MODE), label).toBe("apply_patch");
+      expect(compileCodeModeHelperInput(body, "apply_patch"), label).toBe(
+        `const result = await tools.apply_patch(${JSON.stringify(CANONICAL_PATCH)});\ntext(result);`,
+      );
+    }
+  });
+
+  test("the name-based path compiles the same raw patch", () => {
+    for (const [label, body] of NAME_BASED) {
+      expect(compileCodeModeHelperInput(body, "apply_patch"), label).toBe(
+        `const result = await tools.apply_patch(${JSON.stringify(CANONICAL_PATCH)});\ntext(result);`,
+      );
+    }
+  });
+
+  test("a fenced body compiles exactly like its unfenced peer", () => {
+    const fenced = "```diff\n" + CANONICAL_PATCH + "\n```";
+    expect(resolveCodeModeHelperName(undefined, "exec", fenced, undefined, CODE_MODE)).toBe("apply_patch");
+    expect(compileCodeModeHelperInput(fenced, "apply_patch"))
+      .toBe(compileCodeModeHelperInput(CANONICAL_PATCH, "apply_patch"));
+
+    const fencedFallback = JSON.stringify({ code: "```diff\n" + CANONICAL_PATCH + "\n```" });
+    expect(compileCodeModeHelperInput(fencedFallback, "apply_patch"))
+      .toBe(compileCodeModeHelperInput(CANONICAL_PATCH, "apply_patch"));
+  });
+
+  test("decorated delimiters are normalized on every path, not only the bare one", () => {
+    for (const [label, body] of [
+      ["the {input} function wrapper", JSON.stringify({ input: DECORATED_PATCH })],
+      ["the {code} fallback field", JSON.stringify({ code: DECORATED_PATCH })],
+      ["the outer fence", "```diff\n" + DECORATED_PATCH + "\n```"],
+    ] as Array<[string, string]>) {
+      const source = compileCodeModeHelperInput(body, "apply_patch");
+      expect(source, label).toContain(JSON.stringify(CANONICAL_PATCH));
+      expect(source, label).not.toContain("*** Begin Patch ***");
+    }
+  });
+
+  test("keeps an ambiguous or non-envelope fallback field byte-exact", () => {
+    // Two fallback fields: recognition stays fail-closed, so compilation must not reinterpret
+    // the body either — the original JSON still travels as the patch.
+    const ambiguous = JSON.stringify({ code: CANONICAL_PATCH, command: CANONICAL_PATCH });
+    expect(resolveCodeModeHelperName(undefined, "exec", ambiguous, undefined, CODE_MODE)).toBeUndefined();
+    expect(compileCodeModeHelperInput(ambiguous, "apply_patch")).toContain(JSON.stringify(ambiguous));
+
+    // One fallback field that is NOT a patch envelope keeps the name-based unwrap's answers.
+    const notAPatch = JSON.stringify({ command: "await tools.exec_command({ cmd: 'pwd' });" });
+    expect(compileCodeModeHelperInput(notAPatch, "apply_patch")).toContain(JSON.stringify(notAPatch));
+  });
+
+  test("a normal code-mode JavaScript body is never compiled into a helper", () => {
+    const bodies = [
+      "const x = 1;\ntext(x);",
+      "await tools.exec_command({ cmd: 'id' });",
+      'const sample = "tools.apply_patch({ input: patchText })";',
+      "const source = `await tools.apply_patch(\\`*** Begin Patch\\`)`;",
+    ];
+    for (const body of bodies) {
+      expect(resolveCodeModeHelperName(undefined, "exec", body, undefined, CODE_MODE)).toBeUndefined();
+    }
+  });
+
+  test("a caller-defined non-code-mode exec is never reinterpreted", () => {
+    // Flat-bridge and unknown catalogs: `exec` may be an ordinary caller tool that really does
+    // take patch text, so recognition must decline and compilation must not be reached.
+    for (const declared of [undefined, new Set<string>(), new Set(["exec", "exec_command"])]) {
+      for (const body of [CANONICAL_PATCH, JSON.stringify({ code: CANONICAL_PATCH })]) {
+        expect(resolveCodeModeHelperName(undefined, "exec", body, undefined, declared)).toBeUndefined();
+      }
+    }
+  });
+});

@@ -2,6 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { bridgeToResponsesSSE } from "../../src/bridge";
 import type { AdapterEvent } from "../../src/types";
 
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (
+  ...args: string[]
+) => (...args: unknown[]) => Promise<unknown>;
+
 async function drain(stream: ReadableStream<Uint8Array>): Promise<string> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
@@ -159,5 +163,90 @@ describe("bridge normalizes code-mode helper names against the declared catalog"
     expect(sse).toContain('"name":"view_image"');
     expect(sse).not.toContain("tools.view_image");
     expect(sse).not.toContain('"name":"exec"');
+  });
+});
+
+// #5046: `resolveCodeModeHelperName` accepted these wrapper shapes (#4983) but the bridge still
+// compiled from the ORIGINAL body, so the generated JavaScript handed `tools.apply_patch` the
+// wrapper JSON or the outer Markdown fence as the patch. These drive the real bridge and then
+// RUN the delivered body, because a recognizer-level assertion cannot see that gap.
+describe("bridge compiles a recognized apply_patch wrapper from the body it validated", () => {
+  const PATCH = "*** Begin Patch\n*** Add File: note.txt\n+ok\n*** End Patch";
+  const DECORATED = "*** Begin Patch ***\n*** Add File: note.txt\n+ok\n*** End Patch ***";
+
+  /** The compiled `exec` body one turn delivers, read back out of the bridged SSE. */
+  async function deliveredExecInput(argumentText: string): Promise<string> {
+    async function* turn(): AsyncGenerator<AdapterEvent> {
+      yield { type: "tool_call_start", id: "call-patch", name: "exec" } as AdapterEvent;
+      yield { type: "tool_call_delta", id: "call-patch", arguments: argumentText } as AdapterEvent;
+      yield { type: "tool_call_end", id: "call-patch" } as AdapterEvent;
+      yield { type: "done" } as AdapterEvent;
+    }
+    const sse = await drain(bridgeToResponsesSSE(
+      turn(), "deepseek-x", undefined, new Set(["exec"]), undefined, undefined, 50_000,
+      { declaredToolNames: new Set(["exec"]) },
+    ));
+    expect(sse).not.toContain("undeclared client tool");
+    const delivered = sse
+      .split("\n")
+      .filter(line => line.startsWith("data: ") && line !== "data: [DONE]")
+      .map(line => JSON.parse(line.slice("data: ".length)) as {
+        type?: string;
+        item?: { type?: string; input?: unknown };
+      })
+      .find(payload => payload.type === "response.output_item.done" && payload.item?.type === "custom_tool_call");
+    expect(typeof delivered?.item?.input).toBe("string");
+    return delivered!.item!.input as string;
+  }
+
+  /** Run one delivered body the way the client does, and report what apply_patch received. */
+  async function appliedPatch(argumentText: string): Promise<unknown> {
+    const received: unknown[] = [];
+    const run = new AsyncFunction("tools", "text", await deliveredExecInput(argumentText));
+    await run({
+      apply_patch: (patch: unknown) => {
+        received.push(patch);
+        return "ok";
+      },
+    }, () => {});
+    expect(received).toHaveLength(1);
+    return received[0];
+  }
+
+  test("a fallback-field body reaches apply_patch as the patch, not as its wrapper", async () => {
+    for (const key of ["code", "script", "js", "javascript", "command", "cmd", "content"]) {
+      expect(await appliedPatch(JSON.stringify({ [key]: PATCH })), key).toBe(PATCH);
+    }
+  });
+
+  test("the {input} wrapper and the bare body reach apply_patch as the same patch", async () => {
+    expect(await appliedPatch(JSON.stringify({ input: PATCH }))).toBe(PATCH);
+    expect(await appliedPatch(PATCH)).toBe(PATCH);
+  });
+
+  test("a fenced body reaches apply_patch as the patch, with no fence", async () => {
+    expect(await appliedPatch("```diff\n" + PATCH + "\n```")).toBe(PATCH);
+    expect(await appliedPatch(JSON.stringify({ code: "```diff\n" + PATCH + "\n```" }))).toBe(PATCH);
+  });
+
+  test("decorated delimiters are normalized before apply_patch sees them", async () => {
+    expect(await appliedPatch(DECORATED)).toBe(PATCH);
+    expect(await appliedPatch(JSON.stringify({ code: DECORATED }))).toBe(PATCH);
+  });
+
+  test("a caller-defined non-code-mode exec body stays byte-exact", async () => {
+    // Flat catalog: `exec` is an ordinary caller tool that may legitimately take patch text.
+    async function* turn(): AsyncGenerator<AdapterEvent> {
+      yield { type: "tool_call_start", id: "call-plain", name: "exec" } as AdapterEvent;
+      yield { type: "tool_call_delta", id: "call-plain", arguments: JSON.stringify({ code: PATCH }) } as AdapterEvent;
+      yield { type: "tool_call_end", id: "call-plain" } as AdapterEvent;
+      yield { type: "done" } as AdapterEvent;
+    }
+    const sse = await drain(bridgeToResponsesSSE(
+      turn(), "deepseek-x", undefined, undefined, undefined, undefined, 50_000,
+      { declaredToolNames: new Set(["exec", "exec_command"]) },
+    ));
+    expect(sse).not.toContain("tools.apply_patch");
+    expect(sse).toContain('"name":"exec"');
   });
 });

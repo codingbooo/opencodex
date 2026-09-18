@@ -125,6 +125,12 @@ Function-call wrappers around freeform bodies are restored by
 is recoverable because the wrapper is otherwise unusable; two alternate fields are ambiguous and
 therefore remain untouched. Foreign freeform grammars never receive that compatibility rewrite.
 
+Recognition and compilation read ONE body. `resolveCodeModeHelperName` selects the helper by
+reading an `exec` body through those same wrapper rules, and the compiler consumes that identical
+reading, so an envelope that arrived inside an accepted alternate field or an outer fence reaches
+`tools.apply_patch` as the patch instead of as the wrapper it came in. When that reading is not an
+envelope the compiler keeps the name-based path's narrower `input`/`patch` unwrap, byte for byte.
+
 Codex-private tool fields are removed at the same boundary from one table
 (`CANONICAL_ONLY_TOOL_FIELDS`) rather than one bespoke pass each: `external_web_access` on either
 web-search variant, and `defer_loading` on any declaration, which `activateDeferredTool` clears only

@@ -23,6 +23,28 @@ function unwrapPatchInput(value: string): string {
 }
 
 /**
+ * The one body recognition and compilation both read for an apply_patch helper.
+ *
+ * `resolveCodeModeHelperName` decides an `exec` body IS an apply_patch call by reading it
+ * through `unwrapFreeformToolInput(..., "exec")` and testing that reading for a complete
+ * envelope. Compiling from the original text instead generates `tools.apply_patch(...)`
+ * out of a body nobody validated: the accepted fallback field's wrapper JSON, or the
+ * outer Markdown fence, reaches the tool as the patch. When that same reading is a
+ * complete envelope it is therefore the canonical patch, by construction rather than by
+ * the caller remembering to pass it down.
+ *
+ * The name-based path (a provider that got the NAME right and the body wrong, resolved at
+ * tool-call start before any arguments exist) never took that reading, so it keeps
+ * `unwrapPatchInput`'s narrower `input`/`patch` unwrap. The envelope test is what keeps
+ * this from widening: a body whose single fallback field is not a patch still compiles
+ * from the unwrapper that path always used, byte for byte.
+ */
+function canonicalApplyPatchBody(argumentsText: string): string {
+  const inferred = unwrapFreeformToolInput(argumentsText, "exec");
+  return isCompletePatchEnvelope(inferred) ? inferred : unwrapPatchInput(argumentsText);
+}
+
+/**
  * Convert a nested Code Mode helper call into unified-exec JavaScript.
  *
  * Parsed values are serialized as data, never interpolated as source, so command and patch text
@@ -35,7 +57,7 @@ export function compileCodeModeHelperInput(argumentsText: unknown, toolName: str
     ? toolName.slice("default.".length)
     : toolName;
   if (helperName === "apply_patch") {
-    const patch = normalizeApplyPatchDelimiters(unwrapPatchInput(argumentsText));
+    const patch = normalizeApplyPatchDelimiters(canonicalApplyPatchBody(argumentsText));
     return `const result = await tools.apply_patch(${JSON.stringify(patch)});\ntext(result);`;
   }
   let parsed: unknown = argumentsText;
