@@ -5,6 +5,7 @@
   "responses-compaction-recovery-policy.test.ts": "responses",
   "deepseek-artifact-tool-schema.test.ts": "providers",
   "client-config-export-output-limit.test.ts": "config",
+  "responses-skills-snapshot.test.ts": "responses",
   "openai-chat-serialized-tool-call-scaling.test.ts": "adapters/openai",
   "openai-chat-tool-call-id-remint.test.ts": "adapters/openai",
   "coding-agent-json-lines-scaling.test.ts": "providers",
