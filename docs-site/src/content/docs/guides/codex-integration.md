@@ -513,6 +513,36 @@ There is no automatic local truncation mode. A response being accepted is not pr
 long conversation retained its goals; verify the next turn on the original model before
 treating an emergency summary as a recovered task.
 
+### ChatGPT mobile remote thread visibility
+
+Provider-table routing can leave both `openai` and `opencodex` thread identities in the same
+Codex home. Reaching the same proxy does not make those identities equivalent for thread lists.
+In [issue #5848](https://github.com/lidge-jun/opencodex/issues/5848), the reporter observed
+this behavior with Codex app-server 0.157.0 and the ChatGPT Android remote client:
+
+| `thread/list` parameters | Result with root `model_provider = "opencodex"` |
+| --- | --- |
+| `modelProviders` omitted | Only `opencodex` threads |
+| `modelProviders: []` | Both `openai` and `opencodex` threads |
+
+This can affect newly created Desktop and mobile conversations as well as older history:
+clients can explicitly create `openai` threads even when the root default is `opencodex`.
+The retained `openai_base_url` preserves routing for those threads; it does not change the
+remote list's provider filter. A missing mobile entry does not mean the conversation was deleted.
+
+If you maintain a remote client, send `modelProviders: []` in `thread/list` to list all providers,
+keeping the existing pagination and other filters. The ChatGPT mobile client must make that
+change upstream, or Codex app-server must change its omitted-filter behavior. These RPCs are
+handled by Codex app-server, not OpenCodeX's Responses proxy. Until the remote client supports
+that behavior, use Codex Desktop to access the affected conversations.
+
+OpenCodeX does not periodically rewrite thread providers to work around this filter.
+`syncResumeHistory: false` remains an opt-out from history remapping, and client-compaction-only
+routing preserves existing thread identities. Paginated history belongs to Codex's native
+writer. Direct SQLite retagging is not a durable fix: a loaded thread can write its in-memory
+provider back, and changing only the row can disagree with its rollout metadata. Changing the
+root provider merely changes which group an omitted filter selects; it does not combine them.
+
 ### Authless Codex Desktop (opt-in)
 
 In **Dashboard → Overview**, **Open Codex without signing in** controls this existing
