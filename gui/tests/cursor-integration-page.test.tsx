@@ -326,3 +326,17 @@ test("overview: installed but never seen is absent; a recent request is current 
   expect(missing.state).toBe("not-installed");
   expect(missing.detailKey).toBe("integrations.detail.cursorAbsent");
 });
+
+test("regular Cursor offers a manual same-version installer link", async () => {
+  const url = "https://downloads.cursor.com/local-mode/commit/Cursor.exe";
+  statusResponse = () => json(payload({
+    privateInference: { installed: false, path: null, version: null },
+    installer: { version: "3.21.18", url },
+  }));
+  await mount();
+  expect(container.querySelector("[data-cursor-installer]")?.getAttribute("href")).toBe(url);
+  expect(textOf()).toContain("install it manually");
+  expect(textOf()).toContain("3.21.18");
+  expect(textOf()).not.toContain("public tunnel");
+  expect(container.querySelector("[data-installed='false']")).not.toBeNull();
+});

@@ -11,7 +11,7 @@ Cursor 也提供第二種桌面版本：**Cursor Private Inference**。它的代
 
 請先閱讀這節；這是最容易忽略的部分。
 
-- **opencodex 不提供此版本。** Cursor 也未提供相關文件。cursor.com 沒有連結到它，版本可能無預警變更，也可能停止提供。如果你尚未取得，此指南不適用；請改用社群的 [`ocx-cursor`](https://www.npmjs.com/package/ocx-cursor) 橋接及公開 HTTPS 端點。
+- 僅偵測到一般版 Cursor 時，整合 → Cursor 會檢查同版本 cursor-local 安裝程式，並顯示 downloads.cursor.com/local-mode/ 下載連結。請手動下載安裝，再填入下方閘道設定。檢查失敗或沒有相符版本時仍可查看指南。opencodex 不會自動下載、安裝或修改 Cursor 設定。
 - **仍須登入 Cursor。** 登入畫面會先於 gateway 設定視窗出現。
 - **Cursor 自家的模型無法使用。** 在本機模式中，選擇器只列出 gateway 回傳的模型。Tab completion、Cursor 目錄（Composer、Auto）與 Cloud Agents 均會停用。若已設定 Cursor provider，仍可透過 opencodex 自身的 `cursor/*` 路由使用 Cursor provider 模型。
 - **每個回合都會帶上 Cursor 的本機 system prompt**；從第二回合起約為 23k token。選擇模型時請預留容量。

@@ -3231,6 +3231,7 @@ export const zh: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor（普通版）",
   "integrations.cursor.detected": "已检测到",
   "integrations.cursor.notFound": "未找到",
+  "integrations.cursor.installerAvailable": "下载 Cursor Private Inference 并手动安装",
   "integrations.cursor.regularOnly": "仅找到普通版 Cursor。它会通过 Cursor 的服务器路由自定义端点，因此如果没有公网隧道，便无法访问环回代理。有关 Private Inference 版本的信息，请参阅指南。",
   "integrations.cursor.nothingFound": "在常用位置未找到 Cursor 安装。如果安装在其他位置，以下值仍然适用。",
   "integrations.cursor.gateway": "网关参数",

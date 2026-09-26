@@ -11,6 +11,7 @@
  * install, its state database, or its keychain entries (the T20 exclusion in
  * devlog/_plan/260822_senpi_cursor_transfer/090), and the tests run against a temp tree.
  */
+import { readBoundedResponseBody } from "../lib/bounded-body";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { posix, win32 } from "node:path";
@@ -127,7 +128,61 @@ export function detectCursorInstalls(deps: CursorDetectDeps = realCursorDetectDe
     const classified = classify(text);
     if (!classified) continue;
     seen.add(candidate.root);
-    found.push({ build: classified.build, path: candidate.root, version: classified.version });
+    found.push({ build: classified.build, path: candidate.root, version: classified.version ?? packageVersion(deps.readText(candidate.productJson.replace(/product\.json$/, "package.json"))) });
   }
   return found;
+}
+
+// Recent Cursor products keep their application version in package.json.
+function packageVersion(text: string | null): string | null {
+  try {
+    const value = JSON.parse(text ?? "null")?.version;
+    return typeof value === "string" ? value : null;
+  } catch { return null; }
+}
+
+export interface CursorInstaller { version: string; url: string }
+
+const installerCache = new Map<string, { expires: number; result: Promise<CursorInstaller | null> }>();
+
+/** Metadata only: never fetch the installer or mutate the installed app. */
+export async function cursorLocalModeInstaller(
+  installs: CursorInstall[],
+  options: { platform?: string; arch?: string; fetch?: typeof fetch } = {},
+): Promise<CursorInstaller | null> {
+  if (installs.some(install => install.build === "private-inference")) return null;
+  const regular = installs.find(install => install.build === "regular");
+  if (!regular?.version || !/^\d+\.\d+\.\d+$/.test(regular.version)) return null;
+  const installedVersion = regular.version;
+  const platform = options.platform ?? process.platform;
+  const arch = options.arch ?? process.arch;
+  if (!["x64", "arm64"].includes(arch)) return null;
+  const target = platform === "win32"
+    ? `win32-${arch}${/[\\/]Programs[\\/]/i.test(regular.path) ? "-user" : ""}`
+    : platform === "darwin" ? `darwin${arch === "arm64" ? "-arm64" : ""}`
+    : platform === "linux" ? `linux-${arch}` : null;
+  if (!target) return null;
+  const key = `${target}:${regular.version}`;
+  const cached = options.fetch ? undefined : installerCache.get(key);
+  if (cached && cached.expires > Date.now()) return cached.result;
+  const result = (async (): Promise<CursorInstaller | null> => {
+    try {
+      const response = await (options.fetch ?? fetch)(
+        `https://api2.cursor.sh/updates/api/update/${target}/cursor-local/0.0.0/manual-check/stable`,
+        { signal: AbortSignal.timeout(3000), redirect: "error" },
+      );
+      if (!response.ok) { await response.body?.cancel(); return null; }
+      const body = await readBoundedResponseBody(response, { maxBytes: 65_536, totalTimeoutMs: 3000 });
+      if (body.truncated || body.oversized) return null;
+      const manifest = JSON.parse(body.text) as { version?: unknown; productVersion?: unknown; url?: unknown };
+      const version = manifest.productVersion ?? manifest.version;
+      if (version !== regular.version || typeof manifest.url !== "string") return null;
+      const url = new URL(manifest.url);
+      if (url.origin !== "https://downloads.cursor.com" || !url.pathname.startsWith("/local-mode/")
+        || url.username || url.password) return null;
+      return { version: installedVersion, url: url.href };
+    } catch { return null; }
+  })();
+  if (!options.fetch) installerCache.set(key, { expires: Date.now() + 10 * 60_000, result });
+  return result;
 }

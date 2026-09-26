@@ -3232,6 +3232,7 @@ export const ko: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor (일반)",
   "integrations.cursor.detected": "감지됨",
   "integrations.cursor.notFound": "없음",
+  "integrations.cursor.installerAvailable": "Cursor Private Inference를 다운로드하여 수동으로 설치",
   "integrations.cursor.regularOnly": "일반 Cursor만 발견됐습니다. 일반 빌드는 커스텀 엔드포인트를 Cursor 서버가 호출하므로 공개 터널 없이는 loopback 프록시에 닿을 수 없습니다. Private Inference 빌드는 가이드를 참고하세요.",
   "integrations.cursor.nothingFound": "일반적인 위치에서 Cursor를 찾지 못했습니다. 다른 곳에 설치했다면 아래 값은 그대로 유효합니다.",
   "integrations.cursor.gateway": "게이트웨이 값",

@@ -11,7 +11,7 @@ Cursor는 에이전트 루프를 로컬에서 실행하고 사용자가 설정�
 
 놓치기 쉬운 부분이니 먼저 읽어보세요.
 
-- **opencodex는 이 빌드를 배포하지 않습니다.** Cursor도 문서화하지 않았습니다. cursor.com에서 링크하지 않으며, 예고 없이 바뀌거나 제공이 중단될 수 있습니다. 아직 갖고 있지 않다면 이 가이드는 적용되지 않습니다. 대신 공개 HTTPS 엔드포인트와 커뮤니티 [`ocx-cursor`](https://www.npmjs.com/package/ocx-cursor) 브리지를 사용하세요.
+- 일반 Cursor만 감지되면 Integrations → Cursor에서 같은 버전의 cursor-local 매니페스트를 확인하고 downloads.cursor.com/local-mode/ 링크를 표시합니다. 직접 다운로드하고 설치한 다음 아래 게이트웨이 값을 입력하세요. 확인 실패나 일치하는 버전이 없는 경우에도 가이드는 제공됩니다. opencodex는 자동 다운로드, 설치 또는 Cursor 설정 변경을 하지 않습니다.
 - **Cursor 로그인은 여전히 필요합니다.** 로그인 화면이 게이트웨이 설정 창보다 먼저 나옵니다.
 - **Cursor 자체 모델은 사용할 수 없습니다.** 로컬 모드의 선택기에는 게이트웨이가 반환한 모델만 나옵니다. Tab 자동 완성, Cursor 카탈로그(Composer, Auto), Cloud Agents는 꺼집니다. 해당 프로바이더를 설정했다면 opencodex의 `cursor/*` 경로를 통해 Cursor 프로바이더 모델을 사용할 수는 있습니다.
 - **매 요청에는 Cursor의 로컬 시스템 프롬프트가 포함됩니다.** 두 번째 요청부터는 대략 23k 토큰입니다. 모델을 고를 때 이를 고려하세요.

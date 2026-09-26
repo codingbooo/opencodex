@@ -1967,6 +1967,7 @@ export const vi: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor (bản thường)",
   "integrations.cursor.detected": "Đã phát hiện",
   "integrations.cursor.notFound": "Không tìm thấy",
+  "integrations.cursor.installerAvailable": "Tải Cursor Private Inference và cài đặt thủ công",
   "integrations.cursor.regularOnly": "Chỉ tìm thấy Cursor bản thường. Nó định tuyến các custom endpoint qua server của Cursor, vì vậy proxy loopback không thể tiếp cận nếu không có public tunnel. Hãy xem hướng dẫn về bản Private Inference.",
   "integrations.cursor.nothingFound": "Không tìm thấy bản cài đặt Cursor nào ở các vị trí thông thường. Nếu nó được cài đặt ở nơi khác, các giá trị bên dưới vẫn được áp dụng.",
   "integrations.cursor.gateway": "Giá trị Gateway",

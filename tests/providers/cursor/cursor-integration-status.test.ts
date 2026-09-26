@@ -7,7 +7,7 @@ import {
   resetCodexModelEntitlementCacheForTests,
   seedCodexModelEntitlementsForTests,
 } from "../../../src/codex/model-entitlements";
-import { cursorProductJsonCandidates, detectCursorInstalls, type CursorDetectDeps } from "../../../src/integrations/cursor-detect";
+import { cursorLocalModeInstaller, cursorProductJsonCandidates, detectCursorInstalls, type CursorDetectDeps } from "../../../src/integrations/cursor-detect";
 import { parseCursorEffortTable, type CursorEffortTable } from "../../../src/integrations/cursor-effort-table";
 import { cursorLastSeen, recordCursorSeen, resetCursorSeenForTests } from "../../../src/integrations/cursor-seen";
 import { cursorEffortFamily } from "../../../src/server/models-capabilities";
@@ -297,5 +297,44 @@ describe("GET /api/native-integrations/cursor", () => {
     } finally {
       await server.stop(true);
     }
+  });
+});
+
+describe("Cursor local-mode installer discovery", () => {
+  const regular = { build: "regular" as const, path: "C:/Users/u/AppData/Local/Programs/Cursor", version: "3.21.18" };
+  const url = "https://downloads.cursor.com/local-mode/commit/win32/x64/user-setup/Cursor.exe";
+  test("offers the same-version user installer without fetching its binary", async () => {
+    const requests: string[] = [];
+    const fetcher = Object.assign(async (input: string | URL | Request) => {
+      requests.push(String(input));
+      return Response.json({ productVersion: regular.version, url });
+    }, { preconnect: fetch.preconnect }) as typeof fetch;
+    const result = await cursorLocalModeInstaller([regular], { platform: "win32", arch: "x64", fetch: fetcher });
+    expect(result).toEqual({ version: regular.version, url });
+    expect(requests).toEqual(["https://api2.cursor.sh/updates/api/update/win32-x64-user/cursor-local/0.0.0/manual-check/stable"]);
+    expect(await cursorLocalModeInstaller([{ ...regular, build: "private-inference" }], { fetch: fetcher })).toBeNull();
+    expect(await cursorLocalModeInstaller([], { fetch: fetcher })).toBeNull();
+    expect(await cursorLocalModeInstaller([{ ...regular, version: null }], { fetch: fetcher })).toBeNull();
+    expect(requests).toHaveLength(1);
+  });
+  test("rejects other versions, non-local downloads, malformed manifests and failed checks", async () => {
+    for (const body of [
+      { version: "3.21.19", url },
+      { version: regular.version, url: "https://downloads.cursor.com/stable/Cursor.exe" },
+      { version: regular.version, url: "https://other.test/local-mode/Cursor.exe" },
+      null,
+    ]) {
+      const fetcher = Object.assign(async () => Response.json(body), { preconnect: fetch.preconnect }) as typeof fetch;
+      expect(await cursorLocalModeInstaller([regular], { fetch: fetcher })).toBeNull();
+    }
+    const fetcher = Object.assign(async () => { throw new Error("offline"); }, { preconnect: fetch.preconnect }) as typeof fetch;
+    expect(await cursorLocalModeInstaller([regular], { fetch: fetcher })).toBeNull();
+  });
+  test("reads a regular install version from package.json", () => {
+    expect(detectCursorInstalls(fakeDeps("linux", {
+      "/opt": ["cursor"],
+      "/opt/cursor/resources/app/product.json": JSON.stringify({ nameLong: "Cursor" }),
+      "/opt/cursor/resources/app/package.json": JSON.stringify({ version: "3.21.18" }),
+    }))[0]?.version).toBe("3.21.18");
   });
 });

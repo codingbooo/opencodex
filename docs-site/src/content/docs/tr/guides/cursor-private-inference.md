@@ -11,7 +11,7 @@ Cursor, ajan döngüsü yerel çalışan ve yapılandırdığınız OpenAI uyuml
 
 Bu bölümü önce okuyun; çoğu kişinin gözden kaçırdığı kısım budur.
 
-- **opencodex bu derlemeyi dağıtmaz.** Cursor da belgelemiyor. cursor.com üzerinden bağlantısı yoktur, haber verilmeden değişebilir veya artık kullanılamayabilir. Elinizde zaten yoksa bu rehber geçerli değildir; bunun yerine genel bir HTTPS uç noktasıyla topluluğun [`ocx-cursor`](https://www.npmjs.com/package/ocx-cursor) köprüsünü kullanın.
+- Yalnızca normal Cursor algılanırsa Integrations → Cursor, aynı sürümün cursor-local bildirimini kontrol eder ve downloads.cursor.com/local-mode/ bağlantısını gösterir. Elle indirip yükleyin, ardından aşağıdaki ağ geçidi değerlerini girin. Kontrol başarısızsa veya eşleşen sürüm yoksa kılavuz kullanılabilir kalır. opencodex otomatik indirme, yükleme veya Cursor ayarlarını değiştirme işlemi yapmaz.
 - **Cursor oturumu yine gereklidir.** Giriş ekranı ağ geçidi iletişim kutusundan önce gelir.
 - **Cursor'ın kendi modelleri kullanılamaz.** Yerel modda seçici yalnızca ağ geçidinizin döndürdüklerini listeler. Tab tamamlama, Cursor kataloğu (Composer, Auto) ve Cloud Agents kapalıdır. Sağlayıcıyı yapılandırdıysanız Cursor sağlayıcı modellerine opencodex'in kendi `cursor/*` rotaları üzerinden yine ulaşabilirsiniz.
 - **Her tur Cursor'ın yerel sistem istemini taşır**; ikinci ve sonraki turlarda yaklaşık 23 bin token. Model seçerken bunu bütçeye katın.

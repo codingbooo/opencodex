@@ -498,7 +498,7 @@ function cursorRow(payload: CursorIntegrationStatus | null, now = Date.now()): O
   };
   if (!payload) return { ...base, state: "unknown", installed: false, applied: false, detailKey: null };
   if (!payload.privateInference.installed) {
-    return { ...base, state: "not-installed", installed: false, applied: false, detailKey: "integrations.detail.cursorAbsent" };
+    return { ...base, state: "not-installed", installed: false, applied: false, detailKey: payload.installer ? "integrations.cursor.installerAvailable" : "integrations.detail.cursorAbsent" };
   }
   const seenRecently = payload.lastSeen !== null && now - payload.lastSeen.at < CURSOR_SEEN_WINDOW_MS;
   return {

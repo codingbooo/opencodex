@@ -3233,6 +3233,7 @@ export const ru: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor (обычная версия)",
   "integrations.cursor.detected": "Обнаружено",
   "integrations.cursor.notFound": "Не найдено",
+  "integrations.cursor.installerAvailable": "Скачать Cursor Private Inference и установить вручную",
   "integrations.cursor.regularOnly": "Найден только обычный Cursor. Пользовательские эндпоинты он направляет через серверы Cursor, поэтому loopback-прокси недоступен без публичного туннеля. Сведения о сборке Cursor Private Inference см. в руководстве.",
   "integrations.cursor.nothingFound": "Установка Cursor в обычных расположениях не обнаружена. Если Cursor установлен в другом месте, приведённые ниже значения всё равно подходят.",
   "integrations.cursor.gateway": "Параметры шлюза",

@@ -100,7 +100,11 @@ export default function CursorIntegrationPage({ apiBase, active }: { apiBase: st
             <DetectionRow labelKey="integrations.cursor.regular" installed={status.regularCursor.installed} path={status.regularCursor.path} version={null} />
             {!status.privateInference.installed && (
               <Notice tone="warn">
-                {t(status.regularCursor.installed ? "integrations.cursor.regularOnly" : "integrations.cursor.nothingFound")}
+                {status.installer ? (
+                  <a href={status.installer.url} target="_blank" rel="noreferrer" data-cursor-installer>
+                    {t("integrations.cursor.installerAvailable")} · {status.installer.version}
+                  </a>
+                ) : t(status.regularCursor.installed ? "integrations.cursor.regularOnly" : "integrations.cursor.nothingFound")}
                 {" "}
                 <a href={status.guideUrl} target="_blank" rel="noreferrer" data-cursor-guide="notice">{t("integrations.cursor.guide")}</a>
               </Notice>

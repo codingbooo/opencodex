@@ -11,7 +11,7 @@ Cursor distribue également une seconde version de bureau, **Cursor Private Infe
 
 Lisez d’abord cette section : c’est celle qui est souvent négligée.
 
-- **opencodex ne distribue pas cette version.** Cursor ne la documente pas non plus. Elle n’est pas liée depuis cursor.com, peut changer sans préavis et peut cesser d’être disponible. Si vous ne l’avez pas déjà, ce guide ne s’applique pas ; utilisez plutôt le pont communautaire [`ocx-cursor`](https://www.npmjs.com/package/ocx-cursor) avec un point de terminaison HTTPS public.
+- Si seul Cursor standard est détecté, Integrations → Cursor consulte le manifeste cursor-local et propose le lien downloads.cursor.com/local-mode/ de la même version. Téléchargez et installez cette version manuellement, puis renseignez les valeurs de passerelle ci-dessous. Si la vérification échoue ou si aucune version ne correspond, le guide reste disponible. opencodex ne télécharge ni n’installe automatiquement cette version et ne modifie pas les paramètres de Cursor.
 - **La connexion à Cursor reste obligatoire.** L’écran de connexion apparaît avant la boîte de dialogue de la passerelle.
 - **Les modèles propres à Cursor ne sont pas disponibles.** En mode local, le sélecteur ne répertorie que les modèles renvoyés par votre passerelle. La complétion Tab, le catalogue Cursor (Composer, Auto) et Cloud Agents sont désactivés. Vous pouvez toujours accéder aux modèles du fournisseur Cursor par les routes `cursor/*` d’opencodex si vous avez configuré ce fournisseur.
 - **Chaque tour contient la consigne système locale de Cursor**, d’environ 23 000 jetons à partir du deuxième tour. Tenez-en compte lors du choix du modèle.

@@ -492,3 +492,8 @@ keep their existing no-catalog-refresh behavior. The regression suite is
 > Decision record: [Durable provider PATCH](decisions/ADR-0104-durable-provider-patch.md)
 
 > Decision record: [Publication-aware rollback](decisions/ADR-0120-provider-patch-publication-boundary.md)
+
+The Cursor integration status exposes a nullable installer offer independently of installed
+and last-seen state. Its page and overview surface a manual Private Inference download when
+the regular install's version matches Cursor's local-mode manifest; gateway values remain
+available and no installer or Cursor settings are written.

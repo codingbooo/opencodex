@@ -3196,6 +3196,7 @@ export const zhTW: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor（一般版）",
   "integrations.cursor.detected": "已偵測到",
   "integrations.cursor.notFound": "找不到",
+  "integrations.cursor.installerAvailable": "下載 Cursor Private Inference 並手動安裝",
   "integrations.cursor.regularOnly": "只找到一般版 Cursor。它會把自訂端點導向 Cursor 伺服器，因此沒有公開通道就無法連到 loopback 代理。請參閱指南取得 Private Inference 版本。",
   "integrations.cursor.nothingFound": "在常見位置找不到 Cursor。若安裝在其他地方，下方的值仍然適用。",
   "integrations.cursor.gateway": "閘道設定值",

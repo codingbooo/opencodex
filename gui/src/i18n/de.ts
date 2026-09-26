@@ -3210,6 +3210,7 @@ export const de: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor (regulär)",
   "integrations.cursor.detected": "Erkannt",
   "integrations.cursor.notFound": "Nicht gefunden",
+  "integrations.cursor.installerAvailable": "Cursor Private Inference herunterladen und manuell installieren",
   "integrations.cursor.regularOnly": "Es wurde nur die reguläre Cursor-Version gefunden. Sie leitet benutzerdefinierte Endpunkte über die Cursor-Server weiter, sodass ein Loopback-Proxy ohne öffentlichen Tunnel nicht erreichbar ist. Informationen zum Private-Inference-Build finden Sie in der Anleitung.",
   "integrations.cursor.nothingFound": "An den üblichen Speicherorten wurde keine Cursor-Installation gefunden. Falls Cursor an einem anderen Ort installiert ist, gelten die unten stehenden Werte trotzdem.",
   "integrations.cursor.gateway": "Gateway-Werte",

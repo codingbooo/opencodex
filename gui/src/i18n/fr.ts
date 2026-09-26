@@ -3199,6 +3199,7 @@ export const fr: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor (version standard)",
   "integrations.cursor.detected": "Détecté",
   "integrations.cursor.notFound": "Introuvable",
+  "integrations.cursor.installerAvailable": "Télécharger Cursor Private Inference et l’installer manuellement",
   "integrations.cursor.regularOnly": "Seule la version standard de Cursor a été trouvée. Ses requêtes vers les points de terminaison personnalisés passent par les serveurs de Cursor ; un proxy sur l’adresse de bouclage reste donc inaccessible sans tunnel public. Consultez le guide de Cursor Private Inference.",
   "integrations.cursor.nothingFound": "Aucune installation de Cursor n’a été trouvée aux emplacements habituels. Si Cursor est installé ailleurs, les valeurs ci-dessous restent valables.",
   "integrations.cursor.gateway": "Valeurs de la passerelle",

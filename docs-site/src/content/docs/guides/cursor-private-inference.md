@@ -16,11 +16,13 @@ your routed models with no tunnel, no app patching and no TLS. This page covers 
 
 Read this section first; it is the part people miss.
 
-- **opencodex does not distribute this build.** Cursor does not document it either. It is
-  not linked from cursor.com, may change without notice, and may stop being available. If
-  you do not already have it, this guide does not apply; use the community
-  [`ocx-cursor`](https://www.npmjs.com/package/ocx-cursor) bridge with a public HTTPS
-  endpoint instead.
+- **Install the local-mode build manually.** When only regular Cursor is detected,
+  **Integrations → Cursor** checks Cursor's `cursor-local` stable manifest for a
+  same-version installer and shows its `downloads.cursor.com/local-mode/…` link.
+  Availability does not mean Private Inference is already installed. Download and
+  install it yourself, then paste the gateway values below into Cursor. If the
+  check fails or no matching installer is advertised, the guide remains available.
+  opencodex never downloads or installs the build or writes Cursor settings.
 - **Cursor sign-in is still required.** The login wall comes before the gateway dialog.
 - **Cursor's own models are unavailable.** In local mode the picker lists only what your
   gateway returns. Tab completion, Cursor's catalog (Composer, Auto) and Cloud Agents are

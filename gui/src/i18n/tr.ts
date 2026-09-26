@@ -3233,6 +3233,7 @@ export const tr: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor (normal)",
   "integrations.cursor.detected": "Algılandı",
   "integrations.cursor.notFound": "Bulunamadı",
+  "integrations.cursor.installerAvailable": "Cursor Private Inference indirip elle yükleyin",
   "integrations.cursor.regularOnly": "Yalnızca normal Cursor bulundu. Özel uç noktaları Cursor sunucuları üzerinden yönlendirdiği için geri döngü proxy'sine herkese açık bir tünel olmadan erişilemez. Private Inference derlemesi için kılavuza bakın.",
   "integrations.cursor.nothingFound": "Olağan konumlarda Cursor kurulumu bulunamadı. Başka bir yere yüklenmişse aşağıdaki değerler yine de geçerlidir.",
   "integrations.cursor.gateway": "Ağ geçidi değerleri",

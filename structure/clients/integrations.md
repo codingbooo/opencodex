@@ -400,3 +400,12 @@ complete ownership, exact Cline paths and result fingerprints before either nati
 Native pair writes replace the named directory entries without following final symlinks. A symlink
 present at validation is refused, and one exchanged into place during a mutation is refused rather
 than redirecting OpenCodex's write outside Cline's settings directory.
+
+## Cursor installer discovery
+
+Cursor status remains read-only. When only regular Cursor is installed, its version
+(product.json, falling back to package.json) selects a same-version cursor-local manifest
+check. Matching HTTPS downloads on downloads.cursor.com under /local-mode/ are offered as
+manual installer links, never fetched or installed. Checks are time-bounded and cached for
+ten minutes; missing, mismatched or failed manifests retain the guide fallback. Installer
+availability never claims Private Inference is installed or connected.

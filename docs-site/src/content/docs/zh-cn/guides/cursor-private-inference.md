@@ -11,7 +11,7 @@ Cursor 另有一个桌面版本 **Cursor Private Inference**，其代理循环�
 
 请先阅读本节；这是最容易被忽略的部分。
 
-- **opencodex 不分发此版本。** Cursor 也没有公开说明。它不从 cursor.com 链接，可能随时变化，也可能不再提供。如果你尚未拥有它，本指南不适用；请改用社区的 [`ocx-cursor`](https://www.npmjs.com/package/ocx-cursor) 桥接服务与公开 HTTPS 端点。
+- 仅检测到普通版 Cursor 时，集成 → Cursor 会检查同版本 cursor-local 安装包，并显示 downloads.cursor.com/local-mode/ 下载链接。请手动下载安装，再填写下方网关配置。检查失败或没有匹配版本时仍可查看指南。opencodex 不会自动下载、安装或修改 Cursor 设置。
 - **仍需登录 Cursor。** 登录界面出现在 gateway 对话框之前。
 - **无法使用 Cursor 自有模型。** 本地模式下，选择器只列出 gateway 返回的模型。Tab 补全、Cursor 的模型目录（Composer、Auto）及 Cloud Agents 均不可用。如果配置了 Cursor provider，仍可通过 opencodex 自身的 `cursor/*` 路由访问其模型。
 - **每个回合都会携带 Cursor 的本地系统提示词**，从第二回合开始约为 23k token。选择模型时请预留这部分预算。

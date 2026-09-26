@@ -3232,6 +3232,7 @@ export const ja: Record<TKey, string> = {
   "integrations.cursor.regular": "Cursor（通常版）",
   "integrations.cursor.detected": "検出済み",
   "integrations.cursor.notFound": "見つかりません",
+  "integrations.cursor.installerAvailable": "Cursor Private Inference をダウンロードして手動でインストール",
   "integrations.cursor.regularOnly": "通常版の Cursor のみが見つかりました。カスタムエンドポイントは Cursor のサーバー経由でルーティングされるため、公開トンネルがなければ loopback プロキシには接続できません。Private Inference ビルドについてはガイドを参照してください。",
   "integrations.cursor.nothingFound": "通常の場所に Cursor のインストールが見つかりませんでした。別の場所にインストールされている場合でも、以下の値を使用できます。",
   "integrations.cursor.gateway": "ゲートウェイの値",

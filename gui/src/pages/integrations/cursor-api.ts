@@ -25,6 +25,7 @@ export interface CursorIntegrationStatus {
   lastSeen: CursorSeen | null;
   effortTable: { source: "bundle" | "static"; version: string | null; families: number | null };
   models: CursorModelExpectation[];
+  installer?: { version: string; url: string } | null;
   guideUrl: string;
 }
 

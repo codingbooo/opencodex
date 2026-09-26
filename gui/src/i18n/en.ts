@@ -2012,6 +2012,7 @@ export const en = {
   "integrations.cursor.regular": "Cursor (regular)",
   "integrations.cursor.detected": "Detected",
   "integrations.cursor.notFound": "Not found",
+  "integrations.cursor.installerAvailable": "Download Cursor Private Inference and install it manually",
   "integrations.cursor.regularOnly": "Only regular Cursor was found. It routes custom endpoints through Cursor's servers, so a loopback proxy is unreachable without a public tunnel. See the guide for the Private Inference build.",
   "integrations.cursor.nothingFound": "No Cursor install was found in the usual locations. If it is installed elsewhere, the values below still apply.",
   "integrations.cursor.gateway": "Gateway values",

@@ -11,7 +11,7 @@
 import { readRuntimePort } from "../../config/process-state";
 import { filterCatalogVisibleModels, nativeContextLimits, nativeOpenAiContextTier, nativeReasoningEfforts, uniqueCatalogModelsForRawPublicList, visibleNativeSlugs } from "../../codex/catalog";
 import { cursorLastSeen, type CursorSeen } from "../../integrations/cursor-seen";
-import { detectCursorInstalls, type CursorInstall } from "../../integrations/cursor-detect";
+import { cursorLocalModeInstaller, detectCursorInstalls, type CursorInstall } from "../../integrations/cursor-detect";
 import { loadCursorEffortTable } from "../../integrations/cursor-effort-table";
 import { configuredApiAuthToken, isApiAuthRequired, jsonResponse } from "../auth-cors";
 import { localInferenceDestination } from "../../lib/local-destinations";
@@ -37,6 +37,7 @@ export interface CursorIntegrationStatus {
     effortRows: string[];
     context: { defaultWindow: number; longWindow: number } | null;
   }>;
+  installer?: { version: string; url: string } | null;
   guideUrl: string;
 }
 
@@ -123,6 +124,7 @@ export async function buildCursorIntegrationStatus(
     lastSeen: cursorLastSeen(),
     effortTable,
     models,
+    installer: await cursorLocalModeInstaller(installs),
     guideUrl: CURSOR_GUIDE_URL,
   };
 }
