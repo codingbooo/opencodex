@@ -115,6 +115,8 @@ export interface StartClaudeInterceptOptions<T> {
   configDir?: string;
   /** Routes for Desktop's Code-tab picker. Picker mode is wired only when this is given. */
   loadPickerRoutes?: () => Promise<PickerRouteInput>;
+  /** Test seam: bind real CONNECT listeners on ephemeral ports without probe-and-release. */
+  serverDeps?: { startConnectProxy?: typeof startConnectProxy };
   /** Test seam: builds the picker runtime. */
   createPicker?: (options: CreatePickerRuntimeOptions) => PickerRuntime;
   /** Test seams: the macOS `security` runner and platform for the picker runtime and controller. */
@@ -154,9 +156,10 @@ export async function startClaudeIntercept<T>(options: StartClaudeInterceptOptio
     upstreamBase: options.config.claudeCode?.anthropicBaseUrl,
     ...(options.maxRequestBodySize !== undefined ? { maxRequestBodySize: options.maxRequestBodySize } : {}),
   });
+  const bindProxy = options.serverDeps?.startConnectProxy ?? startConnectProxy;
   let proxy: ConnectProxyHandle;
   try {
-    proxy = await startConnectProxy(claudeInterceptProxyPort(options.config, options.publicPort), {
+    proxy = await bindProxy(claudeInterceptProxyPort(options.config, options.publicPort), {
       interceptPort: listener.port!,
       // A real apply may recreate a missing token while this listener remains live.
       // Read current validated authority per CONNECT; absent/invalid means deny, not mint.
@@ -187,7 +190,7 @@ export async function startClaudeIntercept<T>(options: StartClaudeInterceptOptio
       const runtime = picker;
       const interceptPort = listener.port!;
       try {
-        pickerProxy = await startConnectProxy(claudePickerProxyPort(options.config, options.publicPort), {
+        pickerProxy = await bindProxy(claudePickerProxyPort(options.config, options.publicPort), {
           interceptPort,
           // No authToken: Desktop's egressProxyUrl cannot present proxy credentials, so this
           // listener stays an unauthenticated loopback relay until the profile format can carry

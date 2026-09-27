@@ -137,6 +137,11 @@ event loop. Injected probes may return a state or a promise, so isolated callers
 
 ### Picker mode: the Desktop egress proxy
 
+The runtime's optional `serverDeps.startConnectProxy` factory lets tests bind real CONNECT proxies
+on port 0 and retain ownership through shutdown. Production uses the configured consecutive ports.
+`tests/claude-integration/claude-desktop-picker-routes.test.ts` uses the actual bound picker port
+and verifies the caller-added-trust refusal returns 409 and removes trust without port probing.
+
 The shared CONNECT primitive accepts optional `allowedTargets` authorities. It snapshots and
 normalizes that list at startup; an empty list denies all, and other host/port pairs receive 403
 before tunnel selection or dialing. Authentication and loopback refusal remain in force.
