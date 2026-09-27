@@ -146,6 +146,20 @@ test("recorded macOS ls output rejects effective non-owner write grants", () => 
     .toBe("has an access control list");
 });
 
+test("macOS ACL record names do not confer numeric UID identity", () => {
+  const header = "-rw-------+ 1 operator staff 64 Sep 27 07:50 /plugins/plugin.ts\n";
+  for (const principal of ["user:0", "user:runner", "group:operator", "group:root", "group:0", "operator", "root", "0"]) {
+    expect(macAclListingTrustError(`${header} 0: ${principal} allow write\n`, "operator"))
+      .toBe("has an access control list");
+  }
+  for (const principal of ["user:root", "user:operator", "user:current"]) {
+    expect(macAclListingTrustError(`${header} 0: ${principal} allow write\n`, "current")).toBeNull();
+  }
+  for (const principal of ["user:0", "user:runner", "group:everyone", "runner"]) {
+    expect(macAclListingTrustError(`${header} 0: ${principal} allow read,readattr,readsecurity\n`, "operator")).toBeNull();
+  }
+});
+
 test("a transient macOS ACL inspection timeout retries once and still fails closed", () => {
   const timedOut = { status: null, stdout: "", error: Object.assign(new Error("timeout"), { code: "ETIMEDOUT" }) };
   const safe = { status: 0, stdout: "drwxr-xr-x+ 23 root wheel 736 Sep 27 07:50 /\n 0: group:everyone deny delete\n" };
