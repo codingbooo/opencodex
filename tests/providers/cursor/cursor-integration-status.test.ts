@@ -301,7 +301,7 @@ describe("GET /api/native-integrations/cursor", () => {
 });
 
 describe("Cursor local-mode installer discovery", () => {
-  const regular = { build: "regular" as const, path: "C:/Users/u/AppData/Local/Programs/Cursor", version: "3.21.18" };
+  const regular = { build: "regular" as const, path: "C:/Users/example/AppData/Local/Programs/Cursor", version: "3.21.18" };
   const url = "https://downloads.cursor.com/local-mode/commit/win32/x64/user-setup/Cursor.exe";
   test("offers the same-version user installer without fetching its binary", async () => {
     const requests: string[] = [];
@@ -316,6 +316,20 @@ describe("Cursor local-mode installer discovery", () => {
     expect(await cursorLocalModeInstaller([], { fetch: fetcher })).toBeNull();
     expect(await cursorLocalModeInstaller([{ ...regular, version: null }], { fetch: fetcher })).toBeNull();
     expect(requests).toHaveLength(1);
+  });
+  test("reads the Darwin manifest, which names the version `name`", async () => {
+    // The darwin channel omits version/productVersion entirely; only `name` carries it, so a
+    // parser that ignores `name` reports "no installer" on every macOS install.
+    const macUrl = "https://downloads.cursor.com/local-mode/37076c6c3f9e253c0fa2305197e45befd13a2268/darwin/arm64/Cursor-darwin-arm64.zip";
+    const fetcher = Object.assign(async () => Response.json({ url: macUrl, name: "3.22.7" }),
+      { preconnect: fetch.preconnect }) as typeof fetch;
+    const mac = { build: "regular" as const, path: "/Applications/Cursor.app", version: "3.22.7" };
+    expect(await cursorLocalModeInstaller([mac], { platform: "darwin", arch: "arm64", fetch: fetcher }))
+      .toEqual({ version: "3.22.7", url: macUrl });
+    // A Darwin manifest whose `name` is not the installed version is still refused.
+    const stale = Object.assign(async () => Response.json({ url: macUrl, name: "3.22.6" }),
+      { preconnect: fetch.preconnect }) as typeof fetch;
+    expect(await cursorLocalModeInstaller([mac], { platform: "darwin", arch: "arm64", fetch: stale })).toBeNull();
   });
   test("rejects other versions, non-local downloads, malformed manifests and failed checks", async () => {
     for (const body of [

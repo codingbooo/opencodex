@@ -174,8 +174,10 @@ export async function cursorLocalModeInstaller(
       if (!response.ok) { await response.body?.cancel(); return null; }
       const body = await readBoundedResponseBody(response, { maxBytes: 65_536, totalTimeoutMs: 3000 });
       if (body.truncated || body.oversized) return null;
-      const manifest = JSON.parse(body.text) as { version?: unknown; productVersion?: unknown; url?: unknown };
-      const version = manifest.productVersion ?? manifest.version;
+      const manifest = JSON.parse(body.text) as { version?: unknown; productVersion?: unknown; name?: unknown; url?: unknown };
+      // The channel names the version differently per platform: Win32 and Linux send
+      // `version`/`productVersion`, while the Darwin manifests carry only `name`.
+      const version = manifest.productVersion ?? manifest.version ?? manifest.name;
       if (version !== regular.version || typeof manifest.url !== "string") return null;
       const url = new URL(manifest.url);
       if (url.origin !== "https://downloads.cursor.com" || !url.pathname.startsWith("/local-mode/")
