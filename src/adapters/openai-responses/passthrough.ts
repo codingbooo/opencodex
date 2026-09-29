@@ -372,7 +372,9 @@ export function createResponsesPassthroughAdapter(provider: OcxProviderConfig): 
       // OpenAI model inheriting history a routed provider had damaged.
       outBody = repairLegacyDottedToolCallNames(outBody);
       if (!isCanonicalOpenAiForwardProvider(provider)) {
-        outBody = stripInternalChatMessageMetadataPassthrough(outBody);
+        if (provider.preserveResponsesMessageMetadata !== true) {
+          outBody = stripInternalChatMessageMetadataPassthrough(outBody);
+        }
         // The same class of private field, one level up, but keyed on the DESTINATION rather than
         // on the canonical surface alone. `src/server/responses/compact.ts` spreads the caller's
         // raw body into the native `/responses/compact` request without passing through this
@@ -463,8 +465,8 @@ export function createResponsesPassthroughAdapter(provider: OcxProviderConfig): 
       // separately refuses a proven cross-route replay when no plaintext exists; this final
       // serializer guard ensures the foreign opaque state is never forwarded regardless.
       const sanitizedBody = normalizeToolSchemas(
-        stripItemIdsWhenUnstored(
-          stripInvalidItemIds(
+        provider.preserveResponsesInputItemIds === true
+          ? stripInvalidItemIds(
             stripUnsupportedHostedTools(
               sanitizeReasoningInputContent(
                 scrubOcxCompactionItems(
@@ -482,9 +484,29 @@ export function createResponsesPassthroughAdapter(provider: OcxProviderConfig): 
               ),
               provider,
             ),
+          )
+          : stripItemIdsWhenUnstored(
+            stripInvalidItemIds(
+              stripUnsupportedHostedTools(
+                sanitizeReasoningInputContent(
+                  scrubOcxCompactionItems(
+                    outBody,
+                    destinationDecodesNativeCompactionBlob(provider),
+                    threadServingIdentityChanged,
+                  ),
+                  {
+                    preserveRawReasoningContent: provider.preserveResponsesReasoningContent === true,
+                    dropNullContentChannel: !isOpenAiOperatedResponsesDestination(provider),
+                    stripEncryptedContent: threadServingIdentityChanged || requiresPlaintextReasoningReplay(provider),
+                    dropForeignItemId: parsed._dropForeignReasoningItemIds === true,
+                    requirePlaintextReasoning: requiresPlaintextReasoningReplay(provider),
+                  },
+                ),
+                provider,
+              ),
+            ),
+            isXaiResponsesDestination(provider),
           ),
-          isXaiResponsesDestination(provider),
-        ),
         isXaiSchemaTarget(provider),
       );
       const unnormalizedBody = stripDisabledVerbosity(

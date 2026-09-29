@@ -51,6 +51,14 @@ string on this wire instead of the numeric `thinking_budget` the Chat wire appli
 stays unpinned. `tests/providers/alibaba-token-plan-wire-defaults.test.ts` covers the pins and the
 replay flag.
 
+Responses relays and launcher proxies such as Codex Web GPT (`chatgpt-web/*`) can opt into
+`preserveResponsesInputItemIds` and `preserveResponsesMessageMetadata` on custom `openai-responses`
+providers. By default, ordinary third-party Responses destinations have input item IDs stripped when
+`store: false` to avoid nonexistent item reference 404s, and have ChatGPT-internal
+`internal_chat_message_metadata_passthrough` removed to avoid unknown parameter errors. Opting in
+preserves the current-turn user message ID and private turn metadata required for browser-session
+replay without relaxing sanitization for standard upstreams (#6220).
+
 xAI keeps `openai-chat` as its provider-wide compatibility wire, but Grok 4.5/4.6/4.7 subscription
 Responses requests default to native `openai-responses`. Existing namespace, hosted-search and
 reasoning-replay normalization remains in force. The reserved `xai` OAuth transport is name-pinned
