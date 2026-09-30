@@ -94,7 +94,7 @@ test("opted-in provider preserveResponsesMessageMetadata alone keeps metadata wh
     adapter: "openai-responses",
     baseUrl: "http://127.0.0.1:17841/v1",
     authMode: "key",
-    apiKey: "secret-key",
+    apiKey: "dummy-key",
     preserveResponsesMessageMetadata: true,
   };
   const sent = sentBody(provider, sampleCodexClientBody());
@@ -104,4 +104,37 @@ test("opted-in provider preserveResponsesMessageMetadata alone keeps metadata wh
     turn_id: "turn_abc_456",
     conversation_id: "conv_xyz",
   });
+});
+
+test("opted-in preserveResponsesInputItemIds on xAI destination still repairs custom_tool_call IDs", () => {
+  const provider: OcxProviderConfig = {
+    adapter: "openai-responses",
+    baseUrl: "https://api.x.ai/v1",
+    authMode: "key",
+    apiKey: "dummy-key",
+    preserveResponsesInputItemIds: true,
+  };
+  const bodyWithCustomToolCall = {
+    model: "grok-beta",
+    store: false,
+    input: [
+      {
+        type: "custom_tool_call",
+        call_id: "call_123",
+        name: "test_tool",
+        input: "{}",
+      },
+      {
+        type: "message",
+        role: "user",
+        id: "msg_user_kept",
+        content: "hello",
+      },
+    ],
+  };
+  const sent = sentBody(provider, bodyWithCustomToolCall);
+  const items = sent.input as Record<string, unknown>[];
+  expect(items[0]!.type).toBe("custom_tool_call");
+  expect(String(items[0]!.id)).toStartWith("ctc_");
+  expect(items[1]!.id).toBe("msg_user_kept");
 });

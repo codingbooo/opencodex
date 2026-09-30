@@ -464,49 +464,31 @@ export function createResponsesPassthroughAdapter(provider: OcxProviderConfig): 
       // encrypted reasoning blob, including one whose provenance is unknown. Combo routing
       // separately refuses a proven cross-route replay when no plaintext exists; this final
       // serializer guard ensures the foreign opaque state is never forwarded regardless.
-      const sanitizedBody = normalizeToolSchemas(
-        provider.preserveResponsesInputItemIds === true
-          ? stripInvalidItemIds(
-            stripUnsupportedHostedTools(
-              sanitizeReasoningInputContent(
-                scrubOcxCompactionItems(
-                  outBody,
-                  destinationDecodesNativeCompactionBlob(provider),
-                  threadServingIdentityChanged,
-                ),
-                {
-                  preserveRawReasoningContent: provider.preserveResponsesReasoningContent === true,
-                  dropNullContentChannel: !isOpenAiOperatedResponsesDestination(provider),
-                  stripEncryptedContent: threadServingIdentityChanged || requiresPlaintextReasoningReplay(provider),
-                  dropForeignItemId: parsed._dropForeignReasoningItemIds === true,
-                  requirePlaintextReasoning: requiresPlaintextReasoningReplay(provider),
-                },
-              ),
-              provider,
+      const baseSanitized = stripInvalidItemIds(
+        stripUnsupportedHostedTools(
+          sanitizeReasoningInputContent(
+            scrubOcxCompactionItems(
+              outBody,
+              destinationDecodesNativeCompactionBlob(provider),
+              threadServingIdentityChanged,
             ),
-          )
-          : stripItemIdsWhenUnstored(
-            stripInvalidItemIds(
-              stripUnsupportedHostedTools(
-                sanitizeReasoningInputContent(
-                  scrubOcxCompactionItems(
-                    outBody,
-                    destinationDecodesNativeCompactionBlob(provider),
-                    threadServingIdentityChanged,
-                  ),
-                  {
-                    preserveRawReasoningContent: provider.preserveResponsesReasoningContent === true,
-                    dropNullContentChannel: !isOpenAiOperatedResponsesDestination(provider),
-                    stripEncryptedContent: threadServingIdentityChanged || requiresPlaintextReasoningReplay(provider),
-                    dropForeignItemId: parsed._dropForeignReasoningItemIds === true,
-                    requirePlaintextReasoning: requiresPlaintextReasoningReplay(provider),
-                  },
-                ),
-                provider,
-              ),
-            ),
-            isXaiResponsesDestination(provider),
+            {
+              preserveRawReasoningContent: provider.preserveResponsesReasoningContent === true,
+              dropNullContentChannel: !isOpenAiOperatedResponsesDestination(provider),
+              stripEncryptedContent: threadServingIdentityChanged || requiresPlaintextReasoningReplay(provider),
+              dropForeignItemId: parsed._dropForeignReasoningItemIds === true,
+              requirePlaintextReasoning: requiresPlaintextReasoningReplay(provider),
+            },
           ),
+          provider,
+        ),
+      );
+      const sanitizedBody = normalizeToolSchemas(
+        stripItemIdsWhenUnstored(
+          baseSanitized,
+          isXaiResponsesDestination(provider),
+          provider.preserveResponsesInputItemIds === true,
+        ),
         isXaiSchemaTarget(provider),
       );
       const unnormalizedBody = stripDisabledVerbosity(
