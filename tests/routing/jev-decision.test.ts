@@ -341,6 +341,37 @@ describe("JEV decision client", () => {
     });
   });
 
+  test("posts to a custom self-hosted or proxied baseUrl when configured", async () => {
+    const calls: Array<{
+      name: string;
+      provider: unknown;
+      url: string;
+      init: RequestInit;
+    }> = [];
+    const post = (async (name, provider, url, init) => {
+      calls.push({ name, provider, url, init });
+      return Response.json(validPayload);
+    }) as JevPost;
+
+    const customBase = "https://jev.internal.corp/v1/systemone";
+    const customConfig = jevConfig("custom-secret");
+    customConfig.providers.jev!.baseUrl = customBase;
+
+    const decision = await resolveJevDecision({
+      body: decisionBody,
+      candidates,
+      fallback,
+      config: customConfig,
+      post,
+    });
+
+    expect(decision.gate).toBe("apply");
+    expect(decision.targetKey).toBe("openai/gpt-5.6-sol");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toBe(customBase);
+    expect(new Headers(calls[0]!.init.headers).get("authorization")).toBe("Bearer custom-secret");
+  });
+
   test("transmits only the selected candidate note without changing built-in profiles or choices", async () => {
     const bodies: Record<string, unknown>[] = [];
     const post = (async (_name, _provider, _url, init) => {

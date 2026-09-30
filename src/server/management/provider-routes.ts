@@ -1616,7 +1616,7 @@ export async function handleProviderRoutes(ctx: ManagementContext): Promise<Resp
         message: "Passthrough provider is configured (forwards your Codex login; no upstream /models).",
       });
     }
-    if (name === "jev" && providerMatchesRegistryTransport(name, prov)) {
+    if (name === "jev" && (providerMatchesRegistryTransport(name, prov) || prov.adapter === "jev-decision")) {
       const probe = { targetKey: "jev/probe", effort: null } as const;
       const decision = await resolveJevDecision({
         body: { input: "Verify the configured TypeSafe JEV decision service." },

@@ -16,8 +16,13 @@ const JEV_TIMEOUT_MS = 4_000;
 const JEV_MAX_CANDIDATES = 64;
 const JEV_MAX_REQUEST_BYTES = 65_536;
 const JEV_MAX_RESPONSE_BYTES = 65_536;
+export function isCanonicalJevUrl(name: string, url: string): boolean {
+  if (name !== JEV_PROVIDER_ID) return false;
+  return url === JEV_API_URL;
+}
+
 const JEV_OUTBOUND_DEPENDENCIES = {
-  isCanonicalUrl: (name: string, url: string) => name === JEV_PROVIDER_ID && url === JEV_API_URL,
+  isCanonicalUrl: isCanonicalJevUrl,
 };
 
 const TASK_CHARS = 500;
@@ -540,13 +545,28 @@ function fallbackDecision(
 
 function canonicalJevProvider(config: OcxConfig): OcxProviderConfig {
   const configured = config.providers[JEV_PROVIDER_ID];
-  if (configured && providerMatchesRegistryTransport(JEV_PROVIDER_ID, configured)) return configured;
+  if (configured && isConfiguredJev(configured)) return configured;
   return {
     adapter: "jev-decision",
     baseUrl: JEV_API_URL,
     authMode: "key",
     liveModels: false,
   };
+}
+
+export function isConfiguredJev(provider: Pick<OcxProviderConfig, "baseUrl" | "adapter"> & Partial<Pick<OcxProviderConfig, "authMode">>): boolean {
+  if (provider.adapter !== "jev-decision") return false;
+  if (provider.authMode !== undefined && provider.authMode !== "key") return false;
+  if (typeof provider.baseUrl !== "string" || !provider.baseUrl.trim()) return false;
+  return true;
+}
+
+export function resolveJevEndpoint(config: OcxConfig): string {
+  const configured = config.providers[JEV_PROVIDER_ID];
+  if (configured && isConfiguredJev(configured)) {
+    return configured.baseUrl.trim();
+  }
+  return JEV_API_URL;
 }
 
 /**
@@ -567,8 +587,7 @@ export async function resolveJevDecision(options: ResolveJevDecisionOptions): Pr
 
   const configured = options.config.providers[JEV_PROVIDER_ID];
   if (configured?.disabled === true) return failed("missing_key");
-  const configuredOwnsJev = configured
-    && providerMatchesRegistryTransport(JEV_PROVIDER_ID, configured);
+  const configuredOwnsJev = configured && isConfiguredJev(configured);
   const apiKey = (
     configuredOwnsJev ? resolveProviderApiKey(configured.apiKey)?.trim() : undefined
   ) || process.env.TYPESAFE_API_KEY?.trim()
@@ -594,12 +613,13 @@ export async function resolveJevDecision(options: ResolveJevDecisionOptions): Pr
     ? AbortSignal.any([options.signal, timeoutSignal])
     : timeoutSignal;
   const post = options.post ?? providerOutboundPost;
+  const endpoint = resolveJevEndpoint(options.config);
 
   try {
     const response = await post(
       JEV_PROVIDER_ID,
       canonicalJevProvider(options.config),
-      JEV_API_URL,
+      endpoint,
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -612,7 +632,7 @@ export async function resolveJevDecision(options: ResolveJevDecisionOptions): Pr
     );
     if (options.signal?.aborted) throw options.signal.reason;
 
-    const redirectError = await providerRedirectError(response, JEV_API_URL);
+    const redirectError = await providerRedirectError(response, endpoint);
     if (redirectError) return failed("redirect");
     if (!response.ok) {
       try { void response.body?.cancel().catch(() => undefined); } catch { /* best effort */ }
