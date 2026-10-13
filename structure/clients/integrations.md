@@ -5,7 +5,7 @@ Shared parsing and streaming follow the [request-copy](../transports/byte-accoun
 The client-integration subsystem writes one generated OpenCodex provider contribution into a
 third-party client's existing config without taking ownership of the rest of that file. Its core
 promise is reversibility: apply snapshots first, writes atomically, records exactly what it owns,
-and refuses refresh, disable, or restore when the current file cannot be classified safely.
+and refuses refresh, disable, or restore when the current file cannot be classified safely. Qoder specifics live in [`clients/qoder.md`](qoder.md).
 Managed client targets are inspected without following a final symbolic link, and their atomic
 replacement addresses the named directory entry rather than resolving that link again at commit.
 Uninstall runs the same coordinated disable path for every strict ownership record before removing
@@ -92,20 +92,6 @@ defaults as one owned value.
 The request preference is interpreted after initial Chat route selection and before
 concrete dispatch under the [inbound effort contract](../data-planes/inbound-compat.md#droid-request-defaults).
 It never authenticates a client or changes admission policy.
-
-## Qoder settings ownership
-
-Qoder IDE / qodercli uses JSON at `~/.qoder/settings.json`. The Qoder exporter in
-`src/clients/config-export.ts` writes `providers.opencodex` and one
-`modelConfigs.customModels` entry per model. Array ownership selects both `provider` and
-`model`, preserving same-named models belonging to other providers. Apply, refresh and disable
-use the existing recorded-fragment writer; restore uses its snapshots. Model IDs that cannot
-be represented by the shared selector grammar refuse managed contribution construction.
-The default model is the first normalized model; an empty catalog omits the default.
-Input limits use authoritative context metadata or Qoder's requested 128000 fallback.
-Exports reject non-loopback placeholder use; the writer's existing admission gate protects
-apply while permitting cleanup after a bind change. CLI help, Dashboard export rows, integration
-tabs and preview-path validation register the same Qoder client.
 
 ## Cursor installed capability reads
 
