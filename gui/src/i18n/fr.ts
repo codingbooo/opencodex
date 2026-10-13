@@ -2109,7 +2109,7 @@ export const fr: Record<TKey, string> = {
   "integrations.tab.omo": "omo",
   "integrations.tab.qoder": "Qoder",
   "api.clientConfig.clientQoder": "Qoder",
-  "integrations.semantics.qoder": "Gère les fournisseurs OpenCodex et les modèles personnalisés dans ~/.qoder/settings.json. Nécessite un accès local en boucle. Les autres paramètres sont conservés ; Annuler restaure la sauvegarde.",
+  "integrations.semantics.qoder": "Gère les fournisseurs OpenCodex et les modèles personnalisés dans ~/.qoder/settings.json. Nécessite qu’opencodex soit joignable sur une adresse de bouclage. Les autres paramètres sont conservés ; Annuler restaure la sauvegarde.",
   "integrations.tab.cline": "Cline CLI",
   "integrations.tab.kilo": "Kilo",
   "integrations.tab.droid": "Factory Droid",
