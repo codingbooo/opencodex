@@ -93,6 +93,20 @@ The request preference is interpreted after initial Chat route selection and bef
 concrete dispatch under the [inbound effort contract](../data-planes/inbound-compat.md#droid-request-defaults).
 It never authenticates a client or changes admission policy.
 
+## Qoder settings ownership
+
+Qoder IDE / qodercli uses JSON at `~/.qoder/settings.json`. The Qoder exporter in
+`src/clients/config-export.ts` writes `providers.opencodex` and one
+`modelConfigs.customModels` entry per model. Array ownership selects both `provider` and
+`model`, preserving same-named models belonging to other providers. Apply, refresh and disable
+use the existing recorded-fragment writer; restore uses its snapshots. Model IDs that cannot
+be represented by the shared selector grammar refuse managed contribution construction.
+The default model is the first normalized model; an empty catalog omits the default.
+Input limits use authoritative context metadata or Qoder's requested 128000 fallback.
+Exports reject non-loopback placeholder use; the writer's existing admission gate protects
+apply while permitting cleanup after a bind change. CLI help, Dashboard export rows, integration
+tabs and preview-path validation register the same Qoder client.
+
 ## Cursor installed capability reads
 
 `src/integrations/cursor-effort-table.ts` reads the installed agent bundle through one regular-file
