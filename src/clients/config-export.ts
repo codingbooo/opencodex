@@ -83,7 +83,7 @@ import {
 export type { CommandCodeGeneratedConfig, CommandCodeModelEntry, CommandCodeProviderBlock };
 export { buildCommandCodeClientConfig, summarizeCommandCode, buildCommandCodeContribution, commandCodeProviderRoot };
 import { buildQoderClientConfig, summarizeQoder, buildQoderContribution, qoderConfigPath } from "./config-export/qoder";
-export { buildQoderClientConfig, qoderConfigPath, type QoderGeneratedConfig } from "./config-export/qoder";
+export { buildQoderClientConfig, qoderConfigPath, qoderHomeDir, type QoderGeneratedConfig } from "./config-export/qoder";
 
 
 

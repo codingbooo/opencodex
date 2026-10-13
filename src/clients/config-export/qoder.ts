@@ -1,13 +1,33 @@
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { isLoopbackHostname, shouldInjectApiAuthHeader } from "../../codex/loopback-target";
 import { formatSelectorConjunction } from "../../integrations/merge";
+import { ClientPathError } from "../config-export";
 import type { ExportContext, ManagedContribution, OpencodeLaunchEnv } from "./contracts";
 import { LOOPBACK_API_KEY_PLACEHOLDER, OPENCODE_PROVIDER_ID } from "./constants";
 import { authoritativeContextWindow, normalizeExportModels } from "./model-metadata";
 
-export function qoderConfigPath(_env: OpencodeLaunchEnv = process.env, home: string = homedir()): string {
-  return join(home, ".qoder", "settings.json");
+/**
+ * Qoder's configuration directory: `QODER_CONFIG_DIR` when set, otherwise `~/.qoder`
+ * (https://docs.qoder.com/cli/settings-reference). Export and detection both resolve it here.
+ * A relative override is refused because opencodex and Qoder would anchor it to different cwds.
+ */
+export function qoderHomeDir(env: OpencodeLaunchEnv = process.env, home: string = homedir()): string {
+  const override = env.QODER_CONFIG_DIR?.trim();
+  if (!override) return join(home, ".qoder");
+  if (override === "~") return home;
+  if (override.startsWith("~/") || override.startsWith("~\\")) return join(home, override.slice(2));
+  if (!isAbsolute(override)) {
+    throw new ClientPathError(
+      `QODER_CONFIG_DIR must be an absolute path or start with ~; "${override}" depends on the working directory, `
+      + "so opencodex and Qoder would disagree about which file it names.",
+    );
+  }
+  return override;
+}
+
+export function qoderConfigPath(env: OpencodeLaunchEnv = process.env, home: string = homedir()): string {
+  return join(qoderHomeDir(env, home), "settings.json");
 }
 
 /** Qoder IDE and qodercli share this provider and custom-model catalog. */

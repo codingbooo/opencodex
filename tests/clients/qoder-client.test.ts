@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { buildClientConfigText, buildClientContribution, buildQoderClientConfig, EXPORT_CLIENTS, qoderConfigPath, type ExportContext } from "../../src/clients/config-export";
@@ -9,6 +9,7 @@ import { applyIntegration, disableIntegration, refreshIntegration, restoreIntegr
 import type { OcxConfig } from "../../src/types";
 import { removeTreeWithRetry } from "../helpers/remove-tree";
 import { handleExportCommand } from "../../src/cli/export-command";
+import { handleManagementAPI } from "../../src/server/management-api";
 
 const config = {
   port: 10100, hostname: "127.0.0.1", defaultProvider: "mock",
@@ -45,7 +46,21 @@ function fixture() {
 describe("Qoder client integration", () => {
   test("the export CLI writes Qoder JSON and refuses a remote placeholder without creating a file", async () => {
     const f = fixture();
-    const server = Bun.serve({ port: 0, fetch: () => Response.json(context.models) });
+    // The CLI asks the live management route, so the serving process's bind decides admission.
+    const oldHome = process.env.OPENCODEX_HOME;
+    const oldCodexHome = process.env.CODEX_HOME;
+    process.env.OPENCODEX_HOME = join(f.input.home!, "ocx");
+    process.env.CODEX_HOME = join(f.input.home!, "codex");
+    mkdirSync(process.env.CODEX_HOME, { recursive: true });
+    const live = (hostname: string) => ({
+      ...config, hostname,
+      providers: { mock: { adapter: "openai-chat", baseUrl: "http://127.0.0.1/v1", liveModels: false, models: ["a", "b"] } },
+    }) as OcxConfig;
+    let liveConfig = live("127.0.0.1");
+    const server = Bun.serve({
+      port: 0,
+      fetch: async req => await handleManagementAPI(req, new URL(req.url), liveConfig) ?? new Response("not found", { status: 404 }),
+    });
     const log = console.log;
     const error = console.error;
     console.log = () => {};
@@ -54,17 +69,42 @@ describe("Qoder client integration", () => {
       const output = join(f.input.home!, "export.json");
       const deps = { baseUrl: `http://127.0.0.1:${server.port}`, configImpl: () => config };
       expect(await handleExportCommand(["--client", "qoder", "--out", output], deps)).toBe(0);
-      expect(JSON.parse(readFileSync(output, "utf8")).providers.opencodex.baseUrl).toBe(`${deps.baseUrl}/v1`);
+      expect(JSON.parse(readFileSync(output, "utf8")).providers.opencodex.baseUrl).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/v1$/);
       const before = readFileSync(output, "utf8");
-      expect(await handleExportCommand(["--client", "qoder", "--out", output, "--force"], {
-        ...deps, configImpl: () => ({ ...config, hostname: "0.0.0.0" }),
-      })).not.toBe(0);
+      liveConfig = live("0.0.0.0");
+      expect(await handleExportCommand(["--client", "qoder", "--out", output, "--force"], deps)).not.toBe(0);
       expect(readFileSync(output, "utf8")).toBe(before);
     } finally {
       console.log = log;
       console.error = error;
       server.stop(true);
+      if (oldHome === undefined) delete process.env.OPENCODEX_HOME;
+      else process.env.OPENCODEX_HOME = oldHome;
+      if (oldCodexHome === undefined) delete process.env.CODEX_HOME;
+      else process.env.CODEX_HOME = oldCodexHome;
     }
+  });
+
+  test("QODER_CONFIG_DIR relocates both the written settings file and detection", () => {
+    const root = mkdtempSync(join(tmpdir(), "ocx-qoder-dir-"));
+    roots.push(root);
+    const relocated = join(root, "relocated-qoder");
+    const env = { QODER_CONFIG_DIR: relocated };
+    expect(qoderConfigPath(env, "/home/test")).toBe(join(relocated, "settings.json"));
+    expect(INTEGRATION_CLIENTS.qoder.detectDir(env, "/home/test")).toBe(relocated);
+    expect(qoderConfigPath({ QODER_CONFIG_DIR: "~/q" }, "/home/test")).toBe(join("/home/test", "q", "settings.json"));
+    expect(() => qoderConfigPath({ QODER_CONFIG_DIR: "relative/qoder" }, "/home/test")).toThrow("QODER_CONFIG_DIR");
+    mkdirSync(relocated, { recursive: true });
+    writeFileSync(join(relocated, "settings.json"), JSON.stringify({ theme: "dark" }));
+    const input: IntegrationWriteInput = {
+      clientId: "qoder", config, port: 10100, models: context.models,
+      home: root, env, store: createIntegrationStateStore(join(root, "store")),
+    };
+    expect(applyIntegration(input).ok).toBe(true);
+    expect(JSON.parse(readFileSync(join(relocated, "settings.json"), "utf8")).providers.opencodex).toBeDefined();
+    expect(existsSync(join(root, ".qoder"))).toBe(false);
+    expect(disableIntegration(input).ok).toBe(true);
+    expect(JSON.parse(readFileSync(join(relocated, "settings.json"), "utf8"))).toEqual({ theme: "dark" });
   });
 
   test("exports both JSON catalogs with the requested field casing and normalized model order", () => {

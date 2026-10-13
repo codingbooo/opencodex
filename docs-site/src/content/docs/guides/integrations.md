@@ -22,7 +22,7 @@ file, and removes it again. Nineteen clients work this way, each with a switch:
 | Aside | `~/.aside/u/<account>/models.json` | JSON | after fully quitting and reopening Aside | loopback placeholder |
 | Raycast | `~/.config/raycast/ai/providers.yaml` | YAML | immediately on save — Raycast watches the file | none — loopback only |
 | omo (Pi / senpi) | `~/.omo/agent/models.json` | JSON | new sessions | loopback placeholder |
-| Qoder | `~/.qoder/settings.json` | JSON | new sessions | loopback placeholder |
+| Qoder | `settings.json` in `$QODER_CONFIG_DIR`, default `~/.qoder` | JSON | new sessions | loopback placeholder |
 | Cline CLI | `~/.cline/data/settings/providers.json` and sibling `models.json` | JSON pair | after stopping and restarting Cline | loopback placeholder |
 | Kilo | first existing `kilo.jsonc`, `kilo.json`, `opencode.jsonc`, `opencode.json`, or `config.json` under `~/.config/kilo` | JSONC | new sessions | `OPENCODEX_KILO_API_KEY` |
 | Command Code | `~/.commandcode/providers.json` (on Windows with the default home: use `HOME ?? USERPROFILE` only if nonblank and Windows-absolute, otherwise `homedir()`; a separately supplied home is preserved; append `.commandcode\providers.json`) | JSON | next launch of Command Code | none — keyless loopback (`apiKey: false`) |
@@ -42,13 +42,16 @@ ocx integration client enable --client qoder
 ocx integration client disable --client qoder
 ```
 
-Qoder uses `~/.qoder/settings.json`. Enable merges `providers.opencodex` and
+Qoder uses `settings.json` in `QODER_CONFIG_DIR` when that variable is set, and
+`~/.qoder/settings.json` otherwise; a relative `QODER_CONFIG_DIR` is refused. Enable merges `providers.opencodex` and
 OpenCodex entries in `modelConfigs.customModels`, preserving other providers, custom models,
 and settings. Disable removes the recorded OpenCodex entries; restore uses the existing
 snapshot workflow. The provider's default model is the first model in the sorted export.
 Custom models use their catalog context window, falling back to 128000 input tokens.
 The generated API key is a non-secret placeholder: Qoder integration requires loopback
-access and refuses an authenticated non-loopback bind.
+access and refuses an authenticated non-loopback bind. When the dedicated unauthenticated
+loopback listener is enabled, exports point Qoder at that listener. `ocx sync` and catalog
+changes refresh an already enabled Qoder integration like the other managed clients.
 
 Generated catalogs include only enabled models from each provider selection. This applies to both
 downloads and managed integrations, including Pi and Aside. The management model list still shows

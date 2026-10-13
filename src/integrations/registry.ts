@@ -18,6 +18,7 @@ import {
   ClientPathError,
   buildDroidContribution,
   qoderConfigPath,
+  qoderHomeDir,
   clineConfigPath,
   clineSettingsDir,
   droidConfigPath,
@@ -284,7 +285,7 @@ export const INTEGRATION_CLIENTS: Record<IntegrationClientId, IntegrationClientS
   qoder: {
     id: "qoder",
     configPath: qoderConfigPath,
-    detectDir: (_env = process.env, home = homedir()) => join(home, ".qoder"),
+    detectDir: (env = process.env, home = homedir()) => qoderHomeDir(env, home),
   },
   opencode: {
     id: "opencode",
